@@ -1,36 +1,71 @@
+/// app/page.tsx
 "use client";
 
 import { useState } from "react";
 
 export default function Home() {
   const [prompt, setPrompt] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleGenerate = async () => {
-    const res = await fetch("/api/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt }),
-    });
+    if (!prompt) {
+      setError("Please enter a prompt.");
+      return;
+    }
 
-    const data = await res.json();
-    const output = data?.output?.[0] || data?.urls?.get;
+    setLoading(true);
+    setError(null);
+    setImageUrl(null);
 
-    if (output) setImageUrl(output);
+    try {
+      const response = await fetch("/api/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prompt }),
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        setError(data.error);
+      } else if (data.output && Array.isArray(data.output)) {
+        setImageUrl(data.output[0]); // ✅ Get first image URL from the array
+      } else {
+        setError("No image returned from API.");
+      }
+    } catch (err) {
+      setError("Failed to generate image. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <main>
-      <h1>AI Image Generator</h1>
+    <div style={{ textAlign: "center", padding: "2rem" }}>
+      <h1>🧠 AI Image Generator</h1>
+
       <input
         type="text"
+        placeholder="Enter a prompt like 'sunset over ocean'"
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
-        placeholder="Enter a prompt like 'sunset over ocean'"
+        style={{ padding: "0.5rem", width: "300px", marginRight: "0.5rem" }}
       />
-      <button onClick={handleGenerate}>Generate</button>
+      <button onClick={handleGenerate} disabled={loading}>
+        {loading ? "Generating..." : "Generate"}
+      </button>
 
-      {imageUrl && <img src={imageUrl} alt="Generated image" width={400} />}
-    </main>
+      {error && <p style={{ color: "red" }}>{error}</p>}
+
+      {imageUrl && (
+        <div style={{ marginTop: "2rem" }}>
+          <img src={imageUrl} alt="Generated" style={{ maxWidth: "100%" }} />
+        </div>
+      )}
+    </div>
   );
 }
