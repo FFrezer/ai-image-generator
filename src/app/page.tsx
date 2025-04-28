@@ -2,6 +2,8 @@
 "use client";
 
 import { useState } from "react";
+import Image from 'next/image';
+
 
 export default function Home() {
   const [prompt, setPrompt] = useState("");
@@ -10,39 +12,37 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
 
   const handleGenerate = async () => {
-    if (!prompt) {
-      setError("Please enter a prompt.");
-      return;
-    }
-
     setLoading(true);
-    setError(null);
-    setImageUrl(null);
-
+    setImageUrl(''); // Clear old image
+    setError(''); // Reset error message
+  
     try {
-      const response = await fetch("/api/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ prompt }),
-      });
-
+      const response = await fetch(
+        `https://api.unsplash.com/photos/random?query=${prompt}&client_id=${process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY}`
+      );
       const data = await response.json();
-
-      if (data.error) {
-        setError(data.error);
-      } else if (data.output && Array.isArray(data.output)) {
-        setImageUrl(data.output[0]); // ✅ Get first image URL from the array
+  
+      // Log the full response data for debugging
+      console.log("Response data from Unsplash API:", data);
+  
+      // Check if data exists and if the structure matches what we expect
+      if (Array.isArray(data) && data.length > 0 && data[0].urls && data[0].urls.regular) {
+        // Set the image URL if the response is valid
+        setImageUrl(data[0].urls.regular);
       } else {
-        setError("No image returned from API.");
+        // If the image URL is not found, log the data
+        console.error("Image URL not found in the response data:", data);
+        setError('No image returned from API.');
       }
-    } catch (err) {
-      setError("Failed to generate image. Please try again.");
+    } catch (error) {
+      // Catch any errors and set error state
+      console.error('Error fetching image:', error);
+      setError('Failed to generate image. Please try again.');
     } finally {
       setLoading(false);
     }
   };
+  
 
   return (
     <div style={{ textAlign: "center", padding: "2rem" }}>
@@ -62,10 +62,15 @@ export default function Home() {
       {error && <p style={{ color: "red" }}>{error}</p>}
 
       {imageUrl && (
-        <div style={{ marginTop: "2rem" }}>
-          <img src={imageUrl} alt="Generated" style={{ maxWidth: "100%" }} />
-        </div>
-      )}
+  <Image
+    src={imageUrl}
+    alt="Generated"
+    width={800}  // Adjust width/height to match your image or layout needs
+    height={600}
+    style={{ maxWidth: "100%", height: "auto" }}
+  />
+)}
+
     </div>
   );
 }
