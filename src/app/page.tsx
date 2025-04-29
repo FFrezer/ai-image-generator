@@ -39,7 +39,7 @@ export default function Home() {
         console.error("Image URL not found in response:", data);
         setError("No image returned from API.");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Fetch error:", error);
       setError("Failed to generate image. Please try again.");
     } finally {
