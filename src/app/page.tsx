@@ -40,7 +40,11 @@ export default function Home() {
         setError("No image returned from API.");
       }
     } catch (error: unknown) {
-      console.error("Fetch error:", error);
+      if (error instanceof Error) {
+        console.error("Fetch error:", error.message);
+      } else {
+        console.error("Unknown error:", error);
+      }
       setError("Failed to generate image. Please try again.");
     } finally {
       setLoading(false);
