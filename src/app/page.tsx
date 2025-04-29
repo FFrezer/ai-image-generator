@@ -16,8 +16,9 @@ export default function Home() {
     setImageUrl(null);
     setError(null);
   
-    const testPrompt = prompt || "sunset"; // fallback prompt for testing
+    const testPrompt = prompt || "sunset";
     const accessKey = "pJGLJb9OnEBY3O4ej5EQPfugqofos28aT1lvEA6s1O4";
+  
     try {
       const response = await fetch(
         `https://api.unsplash.com/photos/random?query=${encodeURIComponent(testPrompt)}&client_id=${accessKey}`
