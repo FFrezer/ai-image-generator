@@ -13,35 +13,39 @@ export default function Home() {
 
   const handleGenerate = async () => {
     setLoading(true);
-    setImageUrl(''); // Clear old image
-    setError(''); // Reset error message
+    setImageUrl(null);
+    setError(null);
   
+    const testPrompt = prompt || "sunset"; // fallback prompt for testing
+    const accessKey = "pJGLJb9OnEBY3O4ej5EQPfugqofos28aT1lvEA6s1O4";
     try {
       const response = await fetch(
-        `https://api.unsplash.com/photos/random?query=${prompt}&client_id=${process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY}`
+        `https://api.unsplash.com/photos/random?query=${encodeURIComponent(testPrompt)}&client_id=${accessKey}`
       );
+  
       const data = await response.json();
   
-      // Log the full response data for debugging
-      console.log("Response data from Unsplash API:", data);
+      console.log("Status:", response.status);
+      console.log("Response Data:", data);
   
-      // Check if data exists and if the structure matches what we expect
-      if (Array.isArray(data) && data.length > 0 && data[0].urls && data[0].urls.regular) {
-        // Set the image URL if the response is valid
-        setImageUrl(data[0].urls.regular);
-      } else {
-        // If the image URL is not found, log the data
-        console.error("Image URL not found in the response data:", data);
-        setError('No image returned from API.');
+      if (!response.ok) {
+        setError(data?.errors?.[0] || "API request failed.");
+        return;
       }
-    } catch (error) {
-      // Catch any errors and set error state
-      console.error('Error fetching image:', error);
-      setError('Failed to generate image. Please try again.');
+  
+      if (data && data.urls && data.urls.regular) {
+        setImageUrl(data.urls.regular);
+      } else {
+        console.error("Image URL not found in response:", data);
+        setError("No image returned from API.");
+      }
+    } catch (error: any) {
+      console.error("Fetch error:", error);
+      setError("Failed to generate image. Please try again.");
     } finally {
       setLoading(false);
     }
-  };
+  };  
   
 
   return (
